@@ -1,32 +1,28 @@
-//una matriz de autómata es una forma de representar de manera tabular cómo un autómata finito se comporta en función de su estado actual
-// y las entradas que recibe.Cada celda de la matriz indica el próximo estado al que se moverá el autómata.
 
 tokens =[];
 function analizadorlexico() {
   tokens=[]
   document.getElementById("R").innerHTML = "";
-  valueText = document.getElementById("valueText").value; // esta es el area de texto donde el usuario escribe y lo almacena en la variable valueText
-  u = 0; // lleva un registro de la posición actual en el texto mientras se realiza el análisis 
-  str = ""; // Esta variable se usa para construir una cadena que representará los resultados del análisis 
-  while (u <= valueText.length - 1) {   // iterar a través del texto ingresado por el usuario. El bucle continuará mientras u sea menor o igual 
+  valueText = document.getElementById("valueText").value; 
+  u = 0;
+  str = ""; 
+  while (u <= valueText.length - 1) {  
     l = u;
     u = validateKeyword(u);
     u = validateId(u);
     u = validateReal(u);
-    u = validateInteger(u);    // Cada una de estas funciones intenta reconocer un tipo específico de token en el texto
+    u = validateInteger(u);   
     u = validateCaracter(u); //!No works.
-    // u = validateCadena(u);
     u = validateSpecialSymbol(u);
     u = validateOperator(u);
-    if (l == u) { //no se pudo reconocer ningún token válido en esa posición.
-      document.getElementById("R").innerHTML = // identifica o rechaza el token 
+    if (l == u) {
+      document.getElementById("R").innerHTML = 
       document.getElementById("R").innerHTML + "<br>" + "TKN_NO_IDENTIFICADO (" + valueText[u] + ")";
       u++;
     }
   }
   if(/^[a-zA-Z0-9\s]*=?[a-zA-Z0-9\s]*[;\s]*$/.test(valueText)){
-    analizadorSintactico(valueText);
-
+    analizadorSintactico(1);
   }
 }
 
@@ -34,20 +30,16 @@ function validateKeyword(j) {
   const valueText = document.getElementById("valueText").value;
   const reservedWords = /\b(int|char|float|double|void|do|while|if|else|switch|signed|unsigned|return)\b/g;
   let i = j;
-
   reservedWords.lastIndex = i;
   const match = reservedWords.exec(valueText);
-
   if (match && match.index === i) {
     const word = match[0];
     document.getElementById("R").innerHTML +=
       "<br>TKN_PALABRA_RESERVADA '" + word + "'";
     i += word.length;
     tokens.push({tkn_id:'tkn_keyword', value:word})
-
     return i;
   }
-
   return i;
 }
 function validateId(j) {
@@ -56,25 +48,24 @@ function validateId(j) {
   patternSpanish = /[áéíóúÁÉÍÓÚÜüñÑa-zA-Z]/;
   patternEnglish = /[a-zA-Z]/;
   patternNumbers= /[0-9]/;
-  A = [[], [2, -5, 2], [2, 2, 2]];// matriz A que se utiliza para realizar un análisis léxico del texto.
+  A = [[], [2, -5, 2], [2, 2, 2]];
   i = j;
   statei = 1;
   statef = 2;
   state = statei;
   c = 0;
-  while ((i < (valueText.length)) && (c != -1) && state != -5) {//Dentro del bucle, se verifica el carácter actual en la posición i del texto:
+  while ((i < (valueText.length)) && (c != -1) && state != -5) {
     c = -1;
-    if ((check && patternSpanish.test(valueText[i])) || patternEnglish.test(valueText[i]) ) {//Si es una letra minúscula se establece c en 0
+    if ((check && patternSpanish.test(valueText[i])) || patternEnglish.test(valueText[i]) ) {
       c = 0;
     }
-    if (patternNumbers.test(valueText[i])) {//Si es un dígito se establece c en 1.
+    if (patternNumbers.test(valueText[i])) {
       c = 1;
     }
-    if (valueText[i] == '_') {//Si es un guión bajo se establece c en 2.
+    if (valueText[i] == '_') {
       c = 2;
     }
-    if (c == -1) { //Si c es -1, significa que se encontró un carácter no válido
-      //  state=-5;  
+    if (c == -1) {
     } else {
       state = A[state][c];
       i = i + 1;
@@ -87,13 +78,13 @@ function validateId(j) {
     return i;
   }
   return j;
-} //esta función implementa un autómata finito para identificar identificadores en el texto ingresado
+} 
 
 
 
 function validateInteger(j) {
   valueText = document.getElementById("valueText").value;
-  A = [[], [2, 2, 3], [3], [3]]; // se crea una matriz para que reconozca los num enteros 
+  A = [[], [2, 2, 3], [3], [3]]; 
   i = j;
   statei = 1;
   statef = 3;
@@ -102,11 +93,11 @@ function validateInteger(j) {
   patternNumbers= /[0-9]/;
   while (i < (valueText.length) && (c != -1)) {
     c = -1;
-    if (valueText[i] == '-' && i==0 ) { //nos ayuda a identifica el signo menos o mas
+    if (valueText[i] == '-' && i==0 ) { 
       c = 0;
     }
     
-    if (patternNumbers.test(valueText[i])) { // nos ayuda a identificar si es un digito valueTexterico
+    if (patternNumbers.test(valueText[i])) { 
       c = 2;
     }
     if (c == -1) {
@@ -208,7 +199,6 @@ function validateOperator(j) {
 
   for (const operator of operators) {
     if (valueText.startsWith(operator, i)) {
-      // Encuentra una coincidencia del operador
       document.getElementById("R").innerHTML +=
         "<br>TKN_OPERADOR '" + valueText.substr(i, operator.length) + "'";
         tokens.push({tkn_id:'tkn_operator', value:valueText.substr(i, operator.length)})
@@ -216,14 +206,12 @@ function validateOperator(j) {
       return i;
     }
   }
-
-  // No se encontraron operadores, devuelve la posición original
   return j;
 }
 function validateSpecialSymbol(j) {
   valueText = document.getElementById("valueText").value;
   keyword = ["\{", "\}", "\[", "\]", "\(", "\)", "\;", "\,"];
-  A = [[], [2, 2, 3], [3], [3]]; // se crea una matriz para que reconozca los num enteros 
+  A = [[], [2, 2, 3], [3], [3]]; 
   i = j;
   statei = 1;
   statef = 3;
@@ -231,7 +219,7 @@ function validateSpecialSymbol(j) {
   c = 0;
   while (i < (valueText.length) && (c != -1)) {
     c = -1;
-    if (keyword.includes(valueText[i])) { // nos ayuda a identificar si es un digito valueTexterico
+    if (keyword.includes(valueText[i])) {
       c = 2;
     }
     if (c == -1) {
@@ -249,8 +237,15 @@ function validateSpecialSymbol(j) {
   }
   return j;
 }
-function analizadorSintactico(valueText){
-  variableDeclaration(valueText);
+function analizadorSintactico(valueText, type){
+  switch (type) {
+    case 1:
+      variableDeclaration(valueText);
+      break;
+  
+    default:
+      break;
+  }
 }
 function variableDeclaration(valueText){
   regex = /^\s*(var|let|const|int)\s+[a-zA-Z_]\w*\s*=\s*[a-zA-Z0-9]\w*;\s*$/;
