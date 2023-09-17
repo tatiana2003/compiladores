@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analizador Lexico</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #ffffff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        h2 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .input-container {
+            background-color: #ccc; 
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        p {
+            font-size: 18px;
+            color: #555;
+            margin-bottom: 10px;
+        }
+        label{
+            font-size:12px ;
+            color: #555;
+        }
+
+        input {
+            padding: 5px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            background-color: #ccc; /* Fondo gris */
+        }
+
+ /* Agrega estos estilos al final de tu bloque CSS actual */
+
+/* Modifica el color del texto para hacerlo más oscuro (blanco) */
+/* Modifica el color del texto para hacerlo más oscuro (blanco) */
+.result-container {
+    background-color: #000; /* Fondo negro */
+    padding: 15px;
+    border-radius: 5px;
+    margin-top: 40px;
+    font-size: 20px;
+    width: 900px;
+    height: 700px;
+}
+
+#R {
+    color: #fff; 
+    font-weight: bold;
+    display: block;
+    white-space: nowrap;
+    font-size: 12px;
+}
+
+
+button {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 18px;
+    margin-top: 15px; /* Agrega margen superior para separar del cuadro negro */
+}
+
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h2>Analizador Léxico</h2>
+    <div class="input-container">
+        <p>Ingrese:</p>
+        <label>
+            <input type="checkbox" id="cbox" value="1" /> 
+            Español
+        </label>
+        <br />
+        <textarea id='valueText' style="width: 900px; height: 350px; vertical-align: top;"></textarea>
+    </div>
+
+    <!-- Agrega el contenedor adicional para el resultado -->
+    <div class="result-container">
+        <label id='R' >...</label>
+    </div>
+
+    <button type='button' onclick='analizadorlexico()'>Compilar</button>
+
+    <!-- Incluye tu archivo JavaScript aquí -->
+    <script src="prueba1.js"></script>
+</body>
+</html>
