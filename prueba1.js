@@ -24,7 +24,10 @@ function analizadorlexico() {
       u++;
     }
   }
-  analizadorSintactico(valueText);
+  if(/^[a-zA-Z0-9\s]*=?[a-zA-Z0-9\s]*[;\s]*$/.test(valueText)){
+    analizadorSintactico(valueText);
+
+  }
 }
 
 function validateKeyword(j) {
@@ -38,7 +41,7 @@ function validateKeyword(j) {
   if (match && match.index === i) {
     const word = match[0];
     document.getElementById("R").innerHTML +=
-      "<br>TKN_RESERVADA '" + word + "'";
+      "<br>TKN_PALABRA_RESERVADA '" + word + "'";
     i += word.length;
     tokens.push({tkn_id:'tkn_keyword', value:word})
 
@@ -256,8 +259,8 @@ function variableDeclaration(valueText){
     return;
   }
 
-  if (!/([a-zA-Z_]\w*)\s*=/.test(valueText)) {
-    console.error("Sintáxis Error: Nombre de variable inválido");
+  if (!/^\w+\s+[a-zA-Z_]\w*\s*=\s*\S/.test(valueText)) {
+    console.error("Sintáxis Error: Nombre o asignación de variable inválido, se espera =");
     return;
   }
 
