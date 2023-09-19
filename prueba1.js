@@ -1,9 +1,13 @@
 
 tokens =[];
+operators = ["+", "-", "*", "/",  "==","=", "!=", "&&", "||"];
+
 function analizadorlexico() {
   tokens=[]
   document.getElementById("R").innerHTML = "";
   valueText = document.getElementById("valueText").value; 
+  primerCaracter = valueText.charAt(0);
+
   u = 0;
   str = ""; 
   while (u <= valueText.length - 1) {  
@@ -16,14 +20,29 @@ function analizadorlexico() {
     u = validateSpecialSymbol(u);
     u = validateOperator(u);
     if (l == u) {
-      document.getElementById("R").innerHTML = 
-      document.getElementById("R").innerHTML + "<br>" + "TKN_NO_IDENTIFICADO (" + valueText[u] + ")";
+      if(valueText[u] !== " "){
+        document.getElementById("R").innerHTML = 
+        document.getElementById("R").innerHTML + "<br>" + "TKN_NO_IDENTIFICADO (" + valueText[u] + ")";
+      }
       u++;
     }
   }
-  if(/^[a-zA-Z0-9\s]*=?[a-zA-Z0-9\s]*[;\s]*$/.test(valueText)){
-    analizadorSintactico(1);
+  if(/^[a-zA-Z0-9\s]*=?[a-zA-Z0-9\s]*[;\s]*$/.test(valueText) && valueText){
+    syntaxAnalyzer(valueText,1);
+    return;
   }
+  if(/^\s*\w*\s*\([^)]*\)\s*\{?\s*[^}]*\}?\s*/g.test(valueText)){
+    syntaxAnalyzer(valueText,2)
+    return;
+  }
+  if (operators.includes(primerCaracter)){
+     return console.error(`Sintáxis Error: La expresión comienza con un operador no válido '${primerCaracter}'.`)
+  }
+  if(/^\s*\d+(\.\d+)?\s*[-+*\/]\s*\d+(\.\d+)?\s*$/.test(valueText)){
+     syntaxAnalyzer(valueText,3);
+     return;
+  }
+  
 }
 
 function validateKeyword(j) {
@@ -194,7 +213,6 @@ function validateCaracter(j) {
 
 function validateOperator(j) {
   const valueText = document.getElementById("valueText").value;
-  const operators = ["+", "-", "*", "/",  "==","=", "!=", "&&", "||"];
   let i = j;
 
   for (const operator of operators) {
@@ -237,34 +255,111 @@ function validateSpecialSymbol(j) {
   }
   return j;
 }
-function analizadorSintactico(valueText, type){
+function syntaxAnalyzer(valueText, type){
   switch (type) {
     case 1:
       variableDeclaration(valueText);
       break;
-  
+    case 2:
+      validateFunctions(valueText);
+    case 3:
+      analyzeExpression(valueText)
     default:
       break;
   }
 }
+/*Data para demostración
+Case:1
+int variable = 0; //*CORRECTO
+case:2
+integer variable = 0; //!ERROR
+case:3
+int variabl32&e = 0; //!ERROR
+case:4
+int variabl = **; //!ERROR No me muestra
+case:5
+int variable = 1
+*/
 function variableDeclaration(valueText){
   regex = /^\s*(var|let|const|int)\s+[a-zA-Z_]\w*\s*=\s*[a-zA-Z0-9]\w*;\s*$/;
-  if (!(/^\s*(var|let|const|int)/.test(valueText))) {
-    console.error("Sintáxis Error: Tipo de variable inválido");
-    return;
+  if (!(/^(int|var|let|const)\s+/.test(valueText))) {
+    return console.error("Sintáxis Error: Tipo de variable inválido");
   }
 
   if (!/^\w+\s+[a-zA-Z_]\w*\s*=\s*\S/.test(valueText)) {
-    console.error("Sintáxis Error: Nombre o asignación de variable inválido, se espera =");
-    return;
+    return console.error("Sintáxis Error: Nombre o asignación de variable inválido");
   }
 
-  if (!/=\s*([a-zA-Z0-9]\w*)/.test(valueText)) {
-    console.error("Sintáxis Error: Valor de variable inválido");
-    return;
+  if (!/=\s*([a-zA-Z0-9\s]*)\s*/.test(valueText)) {
+    return console.error("Sintáxis Error: Valor de variable inválido");
   }
-  if(!/.*;$/.test(valueText)){
-    console.error('Sintáxis Error: se esperaba ;');
-    return
+  if(!/\s*;$/.test(valueText)){
+    return console.error('Sintáxis Error: se esperaba ;');
   }
+  return console.warn("Sintáxis correcta")
+}
+/**
+ * Data para demostración
+ * case 1:
+ * if (true) { console.log('Hola, mundo!')); }} //!ERROR
+ * 
+ * 
+ * case correcta:
+ * for (let i = 0; i < 10; i++) { console.log(i); } //*CORRECTO
+ * for (let i = 0; i < 10; i++ { console.log(i); } //!ERROR
+ * 
+ * case if:
+ * if (valor != valor2){} //*CORRECTO
+ * if (valo'¿sr != valor2){} //!ERROR
+ * 
+ */
+function validateFunctions(valueText) {
+  const values= valueText.split(" ");
+  const regexByFunction= values[0]==='for' ? /for\s*\(\s*([^;]+)\s*;\s*([^;]+)\s*;\s*([^)]+)\)/ :/\(\s*(?:[a-zA-Z0-9]+\s*(?:[=!<>]=?\s*[a-zA-Z0-9]+)?|![a-zA-Z0-9]+)\s*\)/;
+  validateBracesAndParentheses(valueText)
+  if (!/^(if|while|for|switch)\s*\([^)]*\)\s*\{[^}]*\}$/.test(valueText)) {
+   return console.error(" Sintáxis Error:  Tipo de estructura inválido");
+  }
+  if (!regexByFunction.test(valueText)) {
+    return console.error("Sintáxis Error: Expresión entre paréntesis inválida");
+  }
+  if (!/\{[^}]*\}/.test(valueText)) {
+    return console.error("Sintáxis Error: Bloque de código inválido");
+  }
+    return console.warn("Sintáxis correcta")
+}
+
+function validateBracesAndParentheses(valueText) {
+  const stack = []
+  for (const caracter of valueText) {
+    if (/[([{]/.test(caracter)) {
+      stack.push(caracter);
+    } else if (/[)\]}]/.test(caracter)) {
+      const lastOpen = stack.pop();
+      if (
+        (lastOpen === '(' && caracter !== ')') ||
+        (lastOpen === '{' && caracter !== '}') ||
+        (lastOpen === '[' && caracter !== ']')
+      ) {
+        return console.error("Sintáxis Error: Paréntesis o llaves no balanceados.");
+      }
+    }
+  }
+  if (stack.length > 0) {
+    return console.error("Sintáxis Error: Paréntesis o llaves no balanceados.");
+  }
+}
+
+/**
+ * Data demostración
+ * 
+ * 1 / 1.1 //*CORRECTO  (+,-,*,/)
+ * 1 / valor //!INCORRECTO
+ * 
+ */
+function analyzeExpression(valueText) {
+  if(!/\s*\d+(\.\d+)?\s*[\+\-\*\/]\s*\d+(\.\d+)?\s*/.test(valueText)){
+    return console.error("Sintáxis Error: solo se permiten operaciones con numeros enteros o reales")
+  }
+  return console.warn("Sintáxis correcta");
 }
