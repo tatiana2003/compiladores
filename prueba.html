@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+  />
     <title>Compilador</title>
     <style>
         body {
@@ -59,6 +63,9 @@
     font-size: 20px;
     width: 900px;
     height: 700px;
+    display: flex;
+    justify-content: space-between;
+    flex-direction: row;
 }
 
 #R {
@@ -68,7 +75,17 @@
     white-space: nowrap;
     font-size: 12px;
 }
+.error_message{
+    color: #ffa09b;
+    width: 100%;
+    border-radius: 4px;
+    background-color: rgba(255, 0, 0, 0.383);
+    opacity: 0.5;
+    font-size: 14px;
+    padding: 4px;
+    display: none;
 
+}
 
 button {
     background-color: #007bff;
@@ -88,7 +105,7 @@ button {
     </style>
 </head>
 <body>
-    <h2>Analizador Léxico</h2>
+    <h2>COMPILADOR</h2>
     <div class="input-container">
         <p>Ingrese:</p>
         <label>
@@ -101,7 +118,15 @@ button {
 
     <!-- Agrega el contenedor adicional para el resultado -->
     <div class="result-container">
-        <label id='R' >...</label>
+        <div style="width:50%"><label id='R' >...</label></div>
+        <div style="width:50%">
+            <div class="error_message" id="contentError">
+                <i class="fa fa-times-circle" aria-hidden="true" id="icon"></i>
+                <label id="error" style="color: #f9c4c1"> </label>
+                
+            </div>
+        </div>
+        
     </div>
 
     <button type='button' onclick='analizadorlexico()'>Compilar</button>
