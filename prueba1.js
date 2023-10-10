@@ -7,7 +7,7 @@ function analizadorlexico() {
   document.getElementById("R").innerHTML = "";
   valueText = document.getElementById("valueText").value; 
   primerCaracter = valueText.charAt(0);
-
+  document.getElementById("result").innerHTML = '';
   u = 0;
   str = ""; 
   while (u <= valueText.length - 1) {  
@@ -27,6 +27,7 @@ function analizadorlexico() {
       u++;
     }
   }
+  semanticAnalyzer(tokens);
   if(/^\s*\w*\s*\([^)]*\)\s*\{?\s*[^}]*\}?\s*/g.test(valueText)){
     syntaxAnalyzer(valueText,2)
     return;
@@ -39,7 +40,7 @@ function analizadorlexico() {
      console.error(`Sintáxis Error: La expresión comienza con un operador no válido '${primerCaracter}'.`);
      return;
   }
-  if(/^\s*\d+(\.\d+)?\s*[-+*\/]\s*\d+(\.\d+)?\s*$/.test(valueText)){
+  if(/^\s*[a-zA-Z0-9\s]*\s*[/*+-]\s*[a-zA-Z0-9\s]*\s*$/.test(valueText)){
      syntaxAnalyzer(valueText,3);
      return;
   }
@@ -279,25 +280,52 @@ integer variable = 0; //!ERROR
 case:3
 int variabl32&e = 0; //!ERROR
 case:4
-int variabl = **; //!ERROR
+int variabl = **; //!ERROR //Analizador
 case:5
 int variable = 1
 */
+
+/**
+ * 
+ * int variable = ola; //!ERROR
+ * int variable = 1;  //*CORRECTO
+ * 
+ * let variable = ola; //*CORRECTO
+ * let variable = 1; //!ERROR
+ * 
+ */
 function variableDeclaration(valueText){
+  let regexValue = '';
+  let variableType;
   if (!(/^(int|var|let|const)\s+/.test(valueText))) {
+    setError('Sintáxis Error: Tipo de variable inválido'); 
     return console.error("Sintáxis Error: Tipo de variable inválido");
   }
 
+  if((/^(int|var|let|const)\s+/.test(valueText))){
+    let match = valueText.match(/^(int|var|let|const)\s+/);
+     variableType = match[1];
+    if(variableType === 'int'){
+      regexValue = /=\s*([0-9_]+)\s*;*$/
+    }else{
+      regexValue = /=\s*([a-zA-Z]+)\s*;*$/;
+    }
+  }
   if (!/^\w+\s+[a-zA-Z_]\w*\s*=\s*\S/.test(valueText)) {
+    setError('Sintáxis Error: Nombre o asignación de variable inválido'); 
     return console.error("Sintáxis Error: Nombre o asignación de variable inválido");
   }
 
-  if (!/=\s*([a-zA-Z0-9_]+)\s*;*$/.test(valueText)) {
-    return console.error("Sintáxis Error: Valor de variable inválido");
+  if (!regexValue.test(valueText)) {
+    setError(`Error: Valor de variable inválido para el tipo: ${variableType}`); 
+    return console.error(`Error: Valor de variable inválido para el tipo: ${variableType}`);
   }
   if(!/\s*;$/.test(valueText)){
+    setError('Sintáxis Error: se esperaba ;'); 
     return console.error('Sintáxis Error: se esperaba ;');
   }
+  setSuccess("Sintáxis correcta");
+  document.getElementById("result").innerHTML = `Resultado : ${valueText}`;
   return console.warn("Sintáxis correcta")
 }
 /**
@@ -312,7 +340,7 @@ function variableDeclaration(valueText){
  * 
  * case if:
  * if (valor != valor2){} //*CORRECTO
- * if (valo'¿sr != valor2){} //!ERROR
+ * if (valor != ?){} // ERRROR //?Analizador semántico
  * 
  */
 function validateFunctions(valueText) {
@@ -324,7 +352,7 @@ function validateFunctions(valueText) {
    return console.error(" Sintáxis Error:  Tipo de estructura inválido");
   }
   if (!regexByFunction.test(valueText)) {
-    setError('Sintáxis Error: Expresión entre paréntesis inválida'); 
+    setError('Expresión entre paréntesis inválida'); //?Analizador semántico
     return console.error("Sintáxis Error: Expresión entre paréntesis inválida");
   }
   if (!/\{[^}]*\}/.test(valueText)) {
@@ -333,7 +361,7 @@ function validateFunctions(valueText) {
   }
   document.getElementById("contentError").style.background = "green"
   setSuccess("Sintáxis correcta");
-  return console.warn("Sintáxis correcta")
+  return console.warn("Sintáxis correcta");
 }
 
 function validateBracesAndParentheses(valueText) {
@@ -348,11 +376,13 @@ function validateBracesAndParentheses(valueText) {
         (lastOpen === '{' && caracter !== '}') ||
         (lastOpen === '[' && caracter !== ']')
       ) {
+        setError('Sintáxis Error: Paréntesis o llaves no balanceados.'); 
         return console.error("Sintáxis Error: Paréntesis o llaves no balanceados.");
       }
     }
   }
   if (stack.length > 0) {
+    setError('Sintáxis Error: Paréntesis o llaves no balanceados.'); 
     return console.error("Sintáxis Error: Paréntesis o llaves no balanceados.");
   }
 }
@@ -360,26 +390,125 @@ function validateBracesAndParentheses(valueText) {
 /**
  * Data demostración
  * 
- * 1 / 1.1 //*CORRECTO  (+,-,*,/)
- * 1 / valor //!INCORRECTO
+ * 1 + 1.1 //*CORRECTO  (+,-,*,/)
+ * 1 + valor //!INCORRECTO
  * 
  */
 function analyzeExpression(valueText) {
-  if(!/\s*\d+(\.\d+)?\s*[\+\-\*\/]\s*\d+(\.\d+)?\s*/.test(valueText)){
-    return console.error("Sintáxis Error: solo se permiten operaciones con numeros enteros o reales")
+  try {
+    if (!/\s*\d+(\.\d+)?\s*[\+\-\*\/]\s*\d+(\.\d+)?\s*/.test(valueText)) {
+      setError('Sintáxis Error: solo se permiten operaciones con números enteros o reales.');
+      document.getElementById("result").innerHTML = ''; // Limpia el resultado si hay un error
+      console.error('Sintáxis Error: solo se permiten operaciones con números enteros o reales');
+    } else {
+      const result = eval(valueText); // Evalúa la expresión
+      if (isNaN(result)) {
+        setError('Error semántico: La expresión no es válida');
+        document.getElementById("result").innerHTML = ''; // Limpia el resultado si hay un error semántico
+        console.error('Error semántico: La expresión no es válida');
+      } else {
+        setSuccess('Sintáxis correcta');
+        // No mostramos el resultado aquí
+        console.warn('Sintáxis correcta');
+        document.getElementById("result").innerHTML = `Resultado: ${result}`;
+      }
+    }
+  } catch (error) {
+    setError('Error semántico: La expresión no es válida');
+    document.getElementById("result").innerHTML = ''; // Limpia el resultado si hay un error
+    console.error('Error semántico: La expresión no es válida');
   }
-  return console.warn("Sintáxis correcta");
 }
 
+function semanticAnalyzer(tokens) {
+  let variable = {};
+  for (const token of tokens) {
+     if (token.tkn_id === 'tkn_operator' && token.value === '=') {
+      // Asignación de variable
+      const variableToken = tokens.shift(); // Extraer el token de la variable
+      const operadorToken = tokens.shift(); // Extraer el token del operador '='
+      const valorToken = tokens.shift(); // Extraer el token del valor asignado
+      if (variableToken && variableToken.tkn_id === 'tkn_id' && operadorToken && operadorToken.tkn_id === 'tkn_operator' && operadorToken.value === '=' && valorToken) {
+        if (valorToken.tkn_id === 'tkn_integer' || valorToken.tkn_id === 'tkn_real') {
+          variable[variableToken.value] = valorToken.value;
+        } else if (valorToken.tkn_id === 'tkn_id' && valorToken.value in variable) {
+          variable[variableToken.value] = variables[valorToken.value];
+        } else {
+          console.error('Error semántico: Valor de asignación no válido.');
+          return;
+        }
+      } 
+    }
+  }
+  
+  verifyDeclaredVariable(variable);
+}
+/**
+ * 
+ *  m = 5; y = x - 5;  //!ERROR
+ * x = 5; y = x - 5; //*CORRECTO
+ */
+function verifyDeclaredVariable(variable) {
+  codigo = document.getElementById("valueText").value; 
+  const lineas = codigo.split(';');
+  if(lineas.length >= 2){
+    const secondPart = lineas[1]?.split('=');
+    const letrasEncontradas = secondPart[1]?.match(/[a-zA-Z]+/g);
+    letrasEncontradas?.forEach(letra => {
+      if (!variable.hasOwnProperty(letra)) {
+        setError("La variable " + letra + " no ha sido declarada");
+        console.error("La variable " + letra + " no ha sido declarada");
+      }else{
+        const operation = secondPart[1].split(' '); 
+        const valueVariable = variable[letra];
+        const secondValue = parseInt(operation[3]);
+        switch (operation[2]) {
+          case '+':
+            setSuccess('Sintáxis correcta');
+            document.getElementById("result").innerHTML = ` Resultado: ${valueVariable + secondValue}`;            
+            break;
+            case '-':
+              setSuccess('Sintáxis correcta');
+            document.getElementById("result").innerHTML = ` Resultado: ${valueVariable - secondValue}`;
+            break
+          case '*':
+            setSuccess('Sintáxis correcta');
+            document.getElementById("result").innerHTML = ` Resultado: ${valueVariable * secondValue}`;
+            break;
+          case '/':
+            setSuccess('Sintáxis correcta');
+            document.getElementById("result").innerHTML = ` Resultado: ${valueVariable / secondValue}`;
+            break
+          default:
+            console.error("Operador no válido")
+            break;
+        }
+      }
+    });
+  }
+ }
+function validateTypeVariable() {
+
+ }
 function setError(message){
-  document.getElementById("contentError").style.display = "block"
-  document.getElementById("error").innerHTML = message;
+  document.getElementById("contentError").style.display = "none";
+  setTimeout(() => { 
+    document.getElementById("contentError").style.display = "block"
+    document.getElementById("error").innerHTML = message;
+    document.getElementById("contentError").style.color = "#ffa09b"
+    document.getElementById("contentError").style.background = "rgba(255, 0, 0, 0.383)"
+    document.getElementById("icon").className= "fa fa-times-circle"
+    document.getElementById("error").style.color = "#f9c4c1";
+  }, 100);
 }
 function setSuccess(message){
-  document.getElementById("contentError").style.display = "block"
-  document.getElementById("contentError").style.color = "#beffe1"
-  document.getElementById("contentError").style.background = "#13481399"
-  document.getElementById("icon").className= "fa fa-check-circle"
-  document.getElementById("error").innerHTML = message;
-  document.getElementById("error").style.color = "#beffe1";
+  document.getElementById("contentError").style.display = "none";
+  setTimeout(() => {   
+    document.getElementById("contentError").style.display = "block"
+    document.getElementById("contentError").style.color = "#beffe1"
+    document.getElementById("contentError").style.background = "#13481399"
+    document.getElementById("icon").className= "fa fa-check-circle"
+    document.getElementById("error").innerHTML = message;
+    document.getElementById("error").style.color = "#beffe1";
+  }, 100);
 }
